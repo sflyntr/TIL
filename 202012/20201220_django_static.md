@@ -11,6 +11,10 @@
 django project root 에 mkdir -p static_my_proj; cd static_my_proj; mkdir css js img
 그리고 img폴더에 beach.jpg를 받아서 넣는다.
 
+
+> project안에 img 폴더를 만들고 직접 참조하게는 할수 있다. 설정없이도 urls.py를 잘 설정하거나 또는 view에서 해당 경로를 hard-coding하면 된다.
+> 하지만, 일반적인 static file은 프로젝트 외부에 두고 관리해야 한다.( cdn사용 등을 위해 nginx등 설정으로 보통 들어간다. )
+
 - home_page.html에 {% load static %} 가 있는데도 beach.jpg가 안보인다.
 - 당연히 설정한것이 없으니까 안보이는 것이다.
 
@@ -25,55 +29,67 @@ STATIC_URL = '/static/'
 # 그리고 일단 내 project내에 개별 개발자가 관리를 해야 하니 프로젝트 내 폴더 static_my_proj를 설정한다.
 # 내 프로젝트에 STATIC FILE은 django에서 검색할 수 있도록 동일하게 환경변수에 설정해 준다.
 # STATICFILES_DIRS 에 List로 넣어준다.
+# project_root에 static_my_proj로 설정해야 하므로, os.path.dirname을 하면 ecommerce가 나오고 또 한번더 dirname을 해야 src가 나온다.
 
 STATICFILES_DIRS = [ os.path.join(BASE_DIR, 'static_my_proj'), ]
 
-# 이까지만 하고 home_page.html을 들어가봐도 여전히 안보인다.
+# 이까지만 하고 home_page.html을 들어가봐도 여전히 안보인다. 왜냐면 STATIC_URL을 모르니까.
+# 따라서 urls.py에 일단 기본적으로 넣어줘야 한다.
+# urls.py
 
+```python
+from django.conf.urls.static import static
 
-
-# 따라서 project_root에 static_my_proj로 설정해야 하므로, os.path.dirname을 하면 ecommerce가 나오고 또 한번더 dirname을 해야 src가 나온다.
-# 그게 바로 BASE_DIR 로 기본적으로 설정되어 있다.
-# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-#
-
-STATIC_ROOT = os.path.join(BASE_DIR, 'static_my_proj') # 이렇게 하면 "/"까지 붙어서 연결된다.
+# 개발에서는 항상 DEBUG를 주고 하며, 실제 production에서는 다른 곳을 볼수 있다. 즉 nginx에 /static/ 등을 설정하거나 다른 cdn사이트가 될수 있으므로.
+if settings.DEBUG:
+    urlpatterns = urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 ```
+이렇게 해도 여전히 안보인다.
 
-## file mode
+즉, 실제 STATICFILES_DIRS 는 내가 관리하기 위한 File을 넣는 위치일 뿐이고, urls에는 STATIC_ROOT를 본다.
+따라서 STATIC_ROOT를 내 project 바깥에 두고 설정한다.
 
-ssh화일들은 매우 중요한 화일이라 화일의 권한설정도 매우 중요하다.   
-아래처럼 해라.   
+나는 project 바깥에 static_cdn/static_root 라는 것으로 관리하고 싶다.
+mkdir -p static_cdn/static_root
 
-즉 모든 화일은 644라 하되, 개인키(id_rsa)만 권한을 더 빼서 600으로 할것. 디렉토리(.ssh)는 700 요렇게 기억하면 된다.  
+```python
+# settings.py
 
-```bash
-chmod 700 ~/.ssh
-chmod 600 ~/.ssh/id_rsa
-chmod 644 ~/.ssh/id_rsa.pub  
-chmod 644 ~/.ssh/authorized_keys
-chmod 644 ~/.ssh/known_host
-chmod 400 ~/.ssh/config # 요 config는 권한이 더 낮다.
+STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static_cdn", "static_root")
 ```
 
-공개키 서버로 옮길때는 아래처럼 하는것이 일반적이다.  
+요렇게 STATIC_ROOT 를 설정하면, 위 urls.py에 설정한 STATIC_ROOT 경로도 실제로 만들어진 것이다.
+근데, 이 안은 빈깡통이다.
+매번 STATICFILES_DIRS 에서 STATIC_ROOT로 File을 copy해 줘야 하는데 불편하다.
+django에서는 명령어를 제공한다.
 
-```bash
-scp $HOME/.ssh/id_rsa.pub yogiyo@deliveryhero.co.kr:id_rsa.pub
-cat $HOME/id_rsa.pub >> $HOME/.ssh/authorized_keys
-# ssh-copy-id 도 많이 사용한다.
+```python
+python manage.py collectstatic
 ```
 
-아래 링크에 설명이 잘되어 있다.  
-[SSH설명][ssh-url]
-[비밀번호없이 SSH접속][ssh-url2]
+이렇게 하고 일단, http://localhost:8000/static/img/beach.jpeg 로 잘 보이는지 확인하자.
+잘 보인다.
 
+그리고 home_page.html도 접속해본다. 이미지 잘 보인다.
 
+media도 똑같이 한다.
+mkdir -p static_cdn/media_root
 
+```python
+# urls.py
+from django.conf.urls.static import static
 
+# 개발에서는 항상 DEBUG를 주고 하며, 실제 production에서는 다른 곳을 볼수 있다. 즉 nginx에 /static/ 등을 설정하거나 다른 cdn사이트가 될수 있으므로.
+if settings.DEBUG:
+    urlpatterns = urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns = urlpatterns + static(settings.MEDIA_URL, document_root=settings.MEDAI_ROOT)
 
+# settings.py
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static_cdn", "media_root")
+
+```
 
 <!-- Markdown link & img dfn's -->
 [npm-image]: https://img.shields.io/npm/v/datadog-metrics.svg?style=flat-square
