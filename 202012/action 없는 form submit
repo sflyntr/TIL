@@ -1,0 +1,28 @@
+# checkout page
+> 일반적인 ecommerce에서 checkout 페이지에 대해 알아본다.
+
+[![NPM Version][npm-image]][npm-url]
+[![Build Status][travis-image]][travis-url]
+[![Downloads Stats][npm-downloads]][npm-url]
+
+![](../header.png)
+
+## form tag 에 action="" 
+form 태그를 쓰면서 action이 없고 type='submit'이면 어떻게 작동하는가?
+
+> action이 없으면 해당 form을 자기자신으로 submit한다.
+> 즉, checkout.html에서 form에 action=''으로 submit하면 그대로 해당 url 에 해당 form을 제출한다.
+> 따라서 해당 url의 서비스기능에는 form이 있다면 어떻게 하고 없다면 어떻게 redirect한다 라는 로직이 들어가야 한다.
+
+
+
+
+<!-- Markdown link & img dfn's -->
+[npm-image]: https://img.shields.io/npm/v/datadog-metrics.svg?style=flat-square
+[npm-url]: https://npmjs.org/package/datadog-metrics
+[npm-downloads]: https://img.shields.io/npm/dm/datadog-metrics.svg?style=flat-square
+[travis-image]: https://img.shields.io/travis/dbader/node-datadog-metrics/master.svg?style=flat-square
+[travis-url]: https://travis-ci.org/dbader/node-datadog-metrics
+[wiki]: https://github.com/yourname/yourproject/wiki
+[ssh-url]: https://arsviator.blogspot.com/2015/04/ssh-ssh-key.html
+[ssh-url2]: https://junho85.pe.kr/667
